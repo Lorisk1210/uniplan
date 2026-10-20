@@ -1,0 +1,36 @@
+appId: io.github.lorisk1210.uniplan
+productName: Uniplan
+executableName: uniplan
+copyright: Copyright © 2026 Lorisk1210
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**
+  - renderer/**
+  - package.json
+npmRebuild: false
+mac:
+  category: public.app-category.education
+  icon: build/icon.png
+  # No Apple developer certificate: sign ad hoc so the app runs on Apple Silicon.
+  # The hardened runtime is only needed for notarization and would block ad hoc signed frameworks.
+  identity: '-'
+  hardenedRuntime: false
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+dmg:
+  title: Uniplan ${version}
+linux:
+  icon: build/icon.png
+  syncDesktopName: true
+  category: Education
+  synopsis: Plan your uni semesters in waves
+  maintainer: Lorisk1210 <Lorisk1210@users.noreply.github.com>
+  target:
+    - AppImage
+    - deb
+artifactName: Uniplan-${version}-${os}-${arch}.${ext}
