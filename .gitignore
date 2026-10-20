@@ -1,0 +1,17 @@
+node_modules/
+dist/
+release/
+*.tsbuildinfo
+.DS_Store
+.vite/
+coverage/
+
+# Capacitor copies the web build into the native projects on `cap sync`.
+apps/mobile/android/app/src/main/assets/public/
+apps/mobile/android/app/src/main/assets/capacitor.config.json
+apps/mobile/android/app/src/main/assets/capacitor.plugins.json
+apps/mobile/ios/App/App/public/
+apps/mobile/ios/App/App/capacitor.config.json
+apps/mobile/ios/App/App/config.xml
+test-results/
+playwright-report/

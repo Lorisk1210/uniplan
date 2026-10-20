@@ -1,0 +1,37 @@
+{
+  "name": "uniplan-monorepo",
+  "private": true,
+  "description": "Plan your uni semesters in waves: web, desktop (Electron) and mobile (Capacitor).",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @uniplan/web",
+    "dev:desktop": "npm run dev -w @uniplan/desktop",
+    "build": "npm run build -w @uniplan/web",
+    "start": "npm run start -w @uniplan/desktop",
+    "dist:mac": "npm run dist:mac -w @uniplan/desktop",
+    "dist:linux": "npm run dist:linux -w @uniplan/desktop",
+    "mobile:sync": "npm run sync -w @uniplan/mobile",
+    "mobile:ios": "npm run ios -w @uniplan/mobile",
+    "mobile:android": "npm run android -w @uniplan/mobile",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p e2e",
+    "test": "npm run test --workspaces --if-present",
+    "check": "npm run typecheck && npm test && npm run build",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "allowScripts": {
+    "electron-winstaller": false
+  }
+}
