@@ -3,7 +3,7 @@ import {
   type Course, type Stage,
 } from '@uniplan/core';
 import { $, closest, esc, icon } from '../dom';
-import { areas, commit, courseById, courses, inView, setUi, undo, VIEWS, type ViewKey } from '../store';
+import { areas, commit, courseById, courses, inView, setUi, VIEWS, type ViewKey } from '../store';
 import { openEditor } from './editor';
 import { derive, sortCourses } from './planner';
 import { toast } from './toast';
@@ -13,7 +13,8 @@ interface Review {
   stage: Stage;
   ids: string[];
   i: number;
-  log: { type: 'advance' | 'keep' | 'drop'; changed: boolean }[];
+  /** What each decision changed, so Back can put exactly that course back (other edits may have happened since). */
+  log: { type: 'advance' | 'keep' | 'drop'; id: string; stage: Stage; prevStage: 0 | 1 | 2 }[];
 }
 
 const dlg = (): HTMLDialogElement => $<HTMLDialogElement>('#dlg-review');
@@ -118,14 +119,12 @@ function reviewDecide(type: 'advance' | 'keep' | 'drop'): void {
   const r = review!;
   const c = courseById(r.ids[r.i]);
   if (!c) return;
-  if (type === 'keep') {
-    r.log.push({ type, changed: false });
-  } else {
+  r.log.push({ type, id: c.id, stage: c.stage, prevStage: c.prevStage });
+  if (type !== 'keep') {
     commit(() => {
       if (type === 'advance') c.stage = Math.min(2, c.stage + 1) as Stage;
       if (type === 'drop') { c.prevStage = c.stage as 0 | 1 | 2; c.stage = -1; }
     });
-    r.log.push({ type, changed: true });
   }
   r.i++;
   renderReview();
@@ -135,7 +134,8 @@ function reviewBack(): void {
   const r = review!;
   const last = r.log.pop();
   if (!last) return;
-  if (last.changed) undo(true);
+  const c = courseById(last.id);
+  if (c && last.type !== 'keep') commit(() => { c.stage = last.stage; c.prevStage = last.prevStage; });
   r.i = Math.max(0, r.i - 1);
   // Skip back over any courses that were deleted meanwhile.
   while (r.i > 0 && !courseById(r.ids[r.i])) r.i--;

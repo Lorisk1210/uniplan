@@ -1,5 +1,5 @@
 import {
-  finalEntries, fmtDate, fmtNum, plural, semesterStatus, shortSemesterName, summarizeSemester, type Semester, type SemesterStatus,
+  creditsOf, finalEntries, fmtDate, fmtNum, plural, semesterStatus, shortSemesterName, summarizeSemester, type Semester, type SemesterStatus,
 } from '@uniplan/core';
 import { $, $$, closest, esc, icon } from '../dom';
 import { areas, semesters, setUi, state } from '../store';
@@ -12,19 +12,26 @@ const STATUS_LABEL: Record<SemesterStatus, string> = { past: 'Completed', curren
 const dateRange = (s: Semester) =>
   s.start && s.end ? `${fmtDate(s.start, { day: 'numeric', month: 'short' })} – ${fmtDate(s.end)}` : s.start ? `From ${fmtDate(s.start)}` : '';
 
+/** Only semesters whose dates (or term) are over count as completed; undated ones might still be running. */
+const isDone = (s: Semester) => semesterStatus(s) === 'past';
+const openLabel = (list: Semester[]) =>
+  list.some((s) => !semesterStatus(s) && summarizeSemester(s).credits) ? 'current, upcoming and undated semesters' : 'current and upcoming semesters';
+
 /** Degree progress: one segment per semester. Completed semesters are solid, the rest a lighter step of the same hue. */
 function meterHTML(list: Semester[], total: number, earned: number): string {
   const scale = Math.max(total, earned, 1);
   const segs = list.map((s) => ({ s, cp: summarizeSemester(s).credits, status: semesterStatus(s) })).filter((x) => x.cp > 0);
   const pct = (cp: number) => (cp / scale) * 100;
   const label = (x: (typeof segs)[number]) => `${x.s.name}: ${fmtNum(x.cp)} CP${x.status ? ` · ${STATUS_LABEL[x.status].toLowerCase()}` : ''}`;
-  const inProgress = segs.some((x) => x.status === 'current' || x.status === 'upcoming');
+  const open = segs.some((x) => !isDone(x.s));
+  const done = segs.some((x) => isDone(x.s));
+  const key = (cls: string, text: string) => `<span><i class="${cls}"></i>${text}</span>`;
   return `<div class="ov-meter" role="img" aria-label="${esc(`${fmtNum(earned)} of ${fmtNum(total)} credits. ${segs.map(label).join('. ')}`)}">
       <div class="ov-track">${segs.map((x) =>
-        `<span class="ov-seg ${x.status === 'current' || x.status === 'upcoming' ? 'planned' : ''}" style="width:${pct(x.cp)}%" title="${esc(label(x))}" data-sem="${x.s.id}"></span>`).join('')}</div>
+        `<span class="ov-seg ${isDone(x.s) ? '' : 'planned'}" style="width:${pct(x.cp)}%" title="${esc(label(x))}" data-sem="${x.s.id}"></span>`).join('')}</div>
       <div class="ov-labels">${segs.map((x) =>
         `<span style="width:${pct(x.cp)}%" title="${esc(label(x))}"><b>${esc(shortSemesterName(x.s.name))}</b> ${fmtNum(x.cp)}</span>`).join('')}</div>
-      ${inProgress ? `<div class="ov-key"><span><i class="done"></i>Completed semesters</span><span><i class="planned"></i>Current and upcoming</span></div>` : ''}
+      ${segs.length ? `<div class="ov-key">${done ? key('done', 'Completed semesters') : ''}${open ? key('planned', openLabel(list).replace(/^./, (c) => c.toUpperCase())) : ''}</div>` : ''}
     </div>`;
 }
 
@@ -73,9 +80,8 @@ export function renderOverview(): void {
   const program = state.data.program;
   const list = semesters();
   const entries = finalEntries(state.data);
-  const earned = entries.reduce((s, e) => s + (e.course.credits || 0), 0);
-  const done = list.filter((s) => semesterStatus(s) !== 'current' && semesterStatus(s) !== 'upcoming')
-    .reduce((n, s) => n + summarizeSemester(s).credits, 0);
+  const earned = creditsOf(entries.map((e) => e.course));
+  const done = creditsOf(list.filter(isDone).flatMap((s) => s.courses.filter((c) => c.stage === 2)));
   const total = program.total;
   const toGo = Math.max(0, total - earned);
   const pctDone = total ? Math.min(100, Math.round((earned / total) * 100)) : 0;
@@ -99,7 +105,7 @@ export function renderOverview(): void {
       <div class="ov-top">
         <div class="ov-hero">
           <b>${fmtNum(earned)}</b><span>/ ${fmtNum(total)} credits</span>
-          ${earned !== done ? `<p>${fmtNum(done)} from completed semesters, ${fmtNum(earned - done)} still in progress</p>` : ''}
+          ${earned !== done ? `<p>${fmtNum(done)} from completed semesters, ${fmtNum(earned - done)} from ${openLabel(list)}</p>` : ''}
         </div>
         <div class="stats">${kpis.map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
       </div>

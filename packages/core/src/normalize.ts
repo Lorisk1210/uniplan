@@ -9,7 +9,8 @@ export const HUES = [255, 225, 195, 165, 140, 105, 75, 50, 25, 0, 330, 295];
 const STAGES: readonly Stage[] = [-1, 0, 1, 2];
 const LIVE_STAGES = [0, 1, 2] as const;
 
-const id = (v: unknown): string => (typeof v === 'string' && v ? v : uid());
+/** Ids end up in HTML attributes and file names, so anything but plain characters gets a fresh one. */
+const id = (v: unknown): string => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v) ? v : uid());
 
 export function normalizeSession(s: unknown): Session | null {
   if (!isObject(s)) return null;
@@ -48,8 +49,13 @@ export function normalizeCourse(r: unknown): Course | null {
   };
 }
 
-export const normalizeCourses = (list: unknown): Course[] =>
-  Array.isArray(list) ? list.map(normalizeCourse).filter((c): c is Course => !!c) : [];
+/** Valid courses from a list, each course and session with its own id. */
+export function normalizeCourses(list: unknown): Course[] {
+  const courses = Array.isArray(list) ? list.map(normalizeCourse).filter((c): c is Course => !!c) : [];
+  const seen = new Set<string>();
+  for (const c of courses) [c, ...c.sessions].forEach((x) => unique(x, seen));
+  return courses;
+}
 
 export function normalizeSemester(r: unknown): Semester | null {
   if (!isObject(r)) return null;
@@ -82,17 +88,27 @@ export function normalizeData(raw: unknown, now = new Date()): PlanData {
     const data = emptyData();
     const courses = normalizeCourses(legacy);
     if (courses.length) data.semesters.push(newSemester(termName(termAt(now)), { courses }));
-    return data;
+    return dedupeIds(data);
   }
   if (!isObject(raw)) return emptyData();
+  const semesters = (Array.isArray(raw.semesters) ? raw.semesters : []).map(normalizeSemester).filter((s): s is Semester => !!s);
+  return dedupeIds({ version: 2, program: 'program' in raw ? normalizeProgram(raw.program) : defaultProgram(), semesters });
+}
+
+/**
+ * Gives every semester, course and session a unique id, in place. The first one keeps it.
+ * Ids can collide after importing a backup into a second semester.
+ */
+export function dedupeIds(data: PlanData): PlanData {
   const seen = new Set<string>();
-  const semesters = (Array.isArray(raw.semesters) ? raw.semesters : [])
-    .map(normalizeSemester)
-    .filter((s): s is Semester => !!s)
-    .map((s) => {
-      if (seen.has(s.id)) s.id = uid();
-      seen.add(s.id);
-      return s;
-    });
-  return { version: 2, program: 'program' in raw ? normalizeProgram(raw.program) : defaultProgram(), semesters };
+  for (const s of data.semesters) {
+    unique(s, seen);
+    for (const c of s.courses) [c, ...c.sessions].forEach((x) => unique(x, seen));
+  }
+  return data;
+}
+
+function unique(x: { id: string }, seen: Set<string>): void {
+  if (seen.has(x.id)) x.id = uid();
+  seen.add(x.id);
 }

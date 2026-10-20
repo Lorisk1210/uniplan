@@ -95,6 +95,12 @@ describe('ics', () => {
     expect(ics).toContain('RRULE:FREQ=WEEKLY;COUNT=15');
   });
 
+  it('can start the 15 weeks on a given day instead', () => {
+    const ics = buildICS([c], { from: '2027-04-01', now: new Date(2026, 9, 22) });
+    expect(ics).toContain('DTSTART:20270407T101500');
+    expect(ics).toContain('RRULE:FREQ=WEEKLY;COUNT=15');
+  });
+
   it('folds long lines', () => {
     const long = course({ name: 'Übung '.repeat(40), sessions: [{ day: 0, start: '10:00', end: '11:00' }] });
     const lines = buildICS([long]).split('\r\n');

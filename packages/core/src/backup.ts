@@ -1,4 +1,4 @@
-import { legacyCourses, normalizeCourses, normalizeData } from './normalize';
+import { dedupeIds, legacyCourses, normalizeCourses, normalizeData } from './normalize';
 import type { Course, PlanData } from './types';
 import { isObject } from './util';
 
@@ -30,7 +30,5 @@ export function mergeById<T extends { id: string }>(into: T[], incoming: readonl
 }
 
 /** Keeps your degree requirements; semesters from the backup replace those with the same id. */
-export const mergeData = (current: PlanData, incoming: PlanData): PlanData => ({
-  ...current,
-  semesters: mergeById(current.semesters, incoming.semesters),
-});
+export const mergeData = (current: PlanData, incoming: PlanData): PlanData =>
+  dedupeIds({ ...current, semesters: mergeById(current.semesters, incoming.semesters) });

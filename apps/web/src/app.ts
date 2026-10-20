@@ -3,7 +3,7 @@ import { $, $$, closest, icon, narrowQuery } from './dom';
 import type { MenuAction } from './platform';
 import { onChange, redo, sem, setUi, state, undo, VIEWS } from './store';
 import { initEditor, openEditor } from './ui/editor';
-import { exportBackup, exportCalendar, importFile, loadExamples } from './ui/io';
+import { exportBackup, exportCalendar, importText, loadExamples, openImport } from './ui/io';
 import { initOverview, renderOverview } from './ui/overview';
 import { derive, initPlanner, renderPlanner, renderTimetable, type Derived } from './ui/planner';
 import { initProgramDialog, openProgramDialog } from './ui/program-dialog';
@@ -65,7 +65,7 @@ function runMenuAction(action: MenuAction): void {
     case 'edit-semester': openSemesterDialog(sem().id); break;
     case 'overview': setUi({ mode: state.ui.mode === 'overview' ? 'semester' : 'overview' }); break;
     case 'requirements': openProgramDialog(); break;
-    case 'import': $('#import-file').click(); break;
+    case 'import': openImport(); break;
     case 'export': exportBackup(); break;
     case 'export-ics': exportCalendar(); break;
     case 'print': window.print(); break;
@@ -117,7 +117,7 @@ export function initApp(): void {
   importInput.addEventListener('change', () => {
     const file = importInput.files?.[0];
     importInput.value = '';
-    if (file) importFile(file);
+    if (file) file.text().then(importText);
   });
 
   document.addEventListener('keydown', (e) => {

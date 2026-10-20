@@ -204,7 +204,7 @@ function saveEditor(another = false): void {
   if (moved) {
     toast(`${isNew ? 'Added' : 'Moved'} ${courseLabel(c)} to ${target.name}`, { action: 'Open', onAction: () => setUi({ mode: 'semester', semesterId: target.id }) });
   } else {
-    toast(isNew ? `Added ${courseLabel(c)}` : `Saved ${courseLabel(c)}`, isNew ? undoAction : undefined);
+    toast(isNew ? `Added ${courseLabel(c)}` : `Saved ${courseLabel(c)}`, isNew ? undoAction() : undefined);
   }
 
   if (another) openEditor(null, { stage: c.stage < 0 ? 0 : c.stage, tags: [...c.tags] });
@@ -278,7 +278,7 @@ export function initEditor(): void {
         const home = homeId;
         d.close();
         commit(() => { (state.data.semesters.find((s) => s.id === home) ?? sem()).courses.push(copy); });
-        toast(`Duplicated ${courseLabel(src)}`, undoAction);
+        toast(`Duplicated ${courseLabel(src)}`, undoAction());
         openEditor(copy.id);
         break;
       }

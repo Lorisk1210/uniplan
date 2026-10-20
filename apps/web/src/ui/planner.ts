@@ -1,5 +1,5 @@
 import {
-  computeConflicts, courseLabel, DAYS, DAYS_LONG, fmtNum, HUES, isActive, isGhost, layoutDay, normalizeCourse,
+  computeConflicts, courseLabel, creditsOf, DAYS, DAYS_LONG, fmtNum, HUES, isActive, isGhost, layoutDay, normalizeCourse,
   overlapsWith, plural, STAGE_LABEL, toMin, uid, validSession, weekday, weeklyMinutes,
   type Conflicts, type Course, type Session,
 } from '@uniplan/core';
@@ -83,7 +83,7 @@ export const sortCourses = (list: Course[]): Course[] =>
 function renderList(d: Derived): void {
   const el = $('#course-list');
   const head = $('#list-head');
-  const credits = d.list.reduce((s, c) => s + (c.credits || 0), 0);
+  const credits = creditsOf(d.list);
   head.innerHTML = d.list.length
     ? `<span><b>${plural(d.list.length, 'course')}</b>${d.list.length !== d.pool.length ? ` of ${d.pool.length}` : ''}</span><span>${credits ? `${fmtNum(credits)} credits` : ''}</span>`
     : '';
@@ -164,7 +164,7 @@ function cardHTML(c: Course, d: Derived): string {
 function renderHead(d: Derived): void {
   $('#view-title').textContent = d.view.title;
   $('#view-sub').textContent = d.view.sub;
-  const credits = d.table.reduce((s, c) => s + (c.credits || 0), 0);
+  const credits = creditsOf(d.table);
   const mins = d.table.reduce((s, c) => s + weeklyMinutes(c), 0);
   const stats: [string | number, string, boolean?][] = [
     [d.table.length, d.table.length === 1 ? 'course' : 'courses'],
@@ -339,23 +339,23 @@ export function cardAction(act: string, c: Course): void {
       break;
     case 'advance':
       commit(() => { c.stage = Math.min(2, c.stage + 1) as 0 | 1 | 2; });
-      toast(`${name} → ${STAGE_LABEL[c.stage]}`, undoAction);
+      toast(`${name} → ${STAGE_LABEL[c.stage]}`, undoAction());
       break;
     case 'demote':
       commit(() => { c.stage = Math.max(0, c.stage - 1) as 0 | 1 | 2; });
-      toast(`${name} → back to ${STAGE_LABEL[c.stage]}`, undoAction);
+      toast(`${name} → back to ${STAGE_LABEL[c.stage]}`, undoAction());
       break;
     case 'drop':
       commit(() => { if (c.stage >= 0) c.prevStage = c.stage as 0 | 1 | 2; c.stage = -1; });
-      toast(`Dropped ${name}`, undoAction);
+      toast(`Dropped ${name}`, undoAction());
       break;
     case 'restore':
       commit(() => { c.stage = c.prevStage; });
-      toast(`${name} restored to ${STAGE_LABEL[c.stage]}`, undoAction);
+      toast(`${name} restored to ${STAGE_LABEL[c.stage]}`, undoAction());
       break;
     case 'delete':
       commit(() => { for (const s of state.data.semesters) s.courses = s.courses.filter((x) => x.id !== c.id); });
-      toast(`Deleted ${name}`, undoAction);
+      toast(`Deleted ${name}`, undoAction());
       break;
   }
 }
@@ -364,7 +364,7 @@ function pickSlot(c: Course, sid: string): void {
   const target = c.sessions.find((s) => s.id === sid);
   if (!target) return;
   commit(() => { for (const s of c.sessions) if (s.alt && s.kind === target.kind) s.chosen = s.id === sid; });
-  toast(`Picked ${DAYS[target.day]} ${target.start} for ${courseLabel(c)}${target.kind ? ` ${target.kind.toLowerCase()}` : ''}`, undoAction);
+  toast(`Picked ${DAYS[target.day]} ${target.start} for ${courseLabel(c)}${target.kind ? ` ${target.kind.toLowerCase()}` : ''}`, undoAction());
 }
 
 function unpickSlot(c: Course, sid: string): void {

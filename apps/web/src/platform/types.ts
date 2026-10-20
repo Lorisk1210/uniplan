@@ -26,6 +26,8 @@ export interface Platform {
   flush?(json: string): void;
   /** Resolves false if the user cancelled. */
   exportFile(file: ExportFile): Promise<boolean>;
+  /** A native picker for a backup to import; resolves to its text, or null if cancelled. Without it, a file input is used. */
+  openFile?(): Promise<string | null>;
   /** Where the data lives, shown in the menu. */
   dataLocation?: string;
   revealData?(): void;

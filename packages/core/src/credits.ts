@@ -26,6 +26,9 @@ export interface CreditTally {
   total: Bucket;
 }
 
+/** Total credits; courses without a value count as 0. */
+export const creditsOf = (courses: readonly Course[]): number => sum(courses, (c) => c.credits || 0);
+
 const credits = (e: CreditEntry): number => e.course.credits || 0;
 
 const bucket = (entries: CreditEntry[]): Bucket => ({
@@ -83,7 +86,7 @@ export interface SemesterSummary {
 export const summarizeSemester = (s: Semester): SemesterSummary => {
   const final = s.courses.filter((c) => c.stage === 2);
   return {
-    credits: sum(final, (c) => c.credits || 0),
+    credits: creditsOf(final),
     final: final.length,
     missingCredits: final.filter((c) => c.credits == null).length,
     open: s.courses.filter((c) => c.stage === 0 || c.stage === 1).length,

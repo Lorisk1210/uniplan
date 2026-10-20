@@ -5,9 +5,11 @@ import type { Course } from './types';
 export interface IcsOptions {
   /** Calendar name shown by calendar apps. */
   name?: string;
-  /** Lecture period ("YYYY-MM-DD"). Without both, events start this week and repeat 15 times. */
+  /** Lecture period ("YYYY-MM-DD"). Without both, events repeat 15 times from `from`. */
   start?: string;
   end?: string;
+  /** First day of the 15 weeks when there's no lecture period. Defaults to this week's Monday. */
+  from?: string;
   now?: Date;
 }
 
@@ -56,8 +58,8 @@ export function buildICS(courses: readonly Course[], opts: IcsOptions = {}): str
       if (first > period[1]) continue;
       rule = `RRULE:FREQ=WEEKLY;UNTIL=${ymd(period[1])}T235959`;
     } else {
-      first = new Date(monday);
-      first.setDate(monday.getDate() + s.day);
+      first = validDate(opts.from) ? parseDate(opts.from) : new Date(monday);
+      first.setDate(first.getDate() + ((s.day - weekday(first) + 7) % 7));
       rule = 'RRULE:FREQ=WEEKLY;COUNT=15';
     }
     lines.push('BEGIN:VEVENT', `UID:${s.id}-${c.id}@uniplan`, `DTSTAMP:${dtstamp}`,

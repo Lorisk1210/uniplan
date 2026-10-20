@@ -82,7 +82,7 @@ function save(): void {
     }
     commit(() => { state.data.semesters.push(s); });
     setUi({ mode: 'semester', semesterId: s.id, view: 'ideas' });
-    toast(carry ? `Created ${name} with ${plural(s.courses.length, 'course')}` : `Created ${name}`, undoAction);
+    toast(carry ? `Created ${name} with ${plural(s.courses.length, 'course')}` : `Created ${name}`, undoAction());
   }
   d.close();
 }
@@ -98,7 +98,7 @@ export async function deleteSemester(s: Semester): Promise<void> {
   });
   if (v !== 'ok') return;
   commit(() => { state.data.semesters = state.data.semesters.filter((x) => x.id !== s.id); });
-  toast(`Deleted ${s.name}`, undoAction);
+  toast(`Deleted ${s.name}`, undoAction());
 }
 
 export function initSemesterDialog(): void {

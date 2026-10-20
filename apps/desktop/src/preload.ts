@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('uniplanDesktop', {
   save: (json: string) => ipcRenderer.invoke('data:save', json),
   saveSync: (json: string) => { ipcRenderer.sendSync('data:save-sync', json); },
   exportFile: (file: { name: string; content: string }) => ipcRenderer.invoke('file:export', file),
+  openFile: () => ipcRenderer.invoke('file:open'),
   revealData: () => ipcRenderer.send('data:reveal'),
   onMenu: (cb: (action: string) => void) => {
     ipcRenderer.on('menu', (_e, action: string) => cb(action));

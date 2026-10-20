@@ -109,7 +109,7 @@ export function initProgramDialog(): void {
     syncDraft();
     const program = normalizeProgram(draft);
     commit(() => { state.data.program = program; });
-    toast('Saved degree requirements', undoAction);
+    toast('Saved degree requirements', undoAction());
     d.close();
   });
   d.addEventListener('click', (e) => {

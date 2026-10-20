@@ -267,6 +267,16 @@ ipcMain.handle('file:export', async (e, file: { name?: unknown; content?: unknow
   return true;
 });
 
+// The page can't open a file picker from a menu command (no user click), so the main process does it.
+ipcMain.handle('file:open', async (e) => {
+  if (!trusted(e)) return null;
+  const owner = BrowserWindow.fromWebContents(e.sender);
+  const opts = { properties: ['openFile' as const], filters: [{ name: 'Uniplan backup', extensions: ['json'] }] };
+  const r = owner ? await dialog.showOpenDialog(owner, opts) : await dialog.showOpenDialog(opts);
+  if (r.canceled || !r.filePaths[0]) return null;
+  return fs.readFileSync(r.filePaths[0], 'utf8');
+});
+
 ipcMain.on('data:reveal', (e) => {
   if (trusted(e)) shell.showItemInFolder(dataFile());
 });

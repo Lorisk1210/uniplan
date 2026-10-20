@@ -1,8 +1,8 @@
-import { finalEntries, fmtNum, plural, semesterStatus, summarizeSemester } from '@uniplan/core';
+import { creditsOf, finalEntries, fmtNum, plural, semesterStatus, summarizeSemester } from '@uniplan/core';
 import { $, closest, coarseQuery, esc, icon } from '../dom';
 import { commit, courses, inView, saveUi, sem, semesters, setUi, state, undo, undoAction, VIEWS, type Tab, type ViewKey } from '../store';
 import { choose } from './choice';
-import { exportBackup, exportCalendar, loadExamples } from './io';
+import { exportBackup, exportCalendar, loadExamples, openImport } from './io';
 import { openProgramDialog } from './program-dialog';
 import { openSemesterDialog } from './semester-dialog';
 import { toast } from './toast';
@@ -63,7 +63,7 @@ const scopeMenu = () => $('#scope-menu');
 
 function renderScopeMenu(): void {
   const { ui } = state;
-  const total = finalEntries(state.data).reduce((s, e) => s + (e.course.credits || 0), 0);
+  const total = creditsOf(finalEntries(state.data).map((e) => e.course));
   const status = { past: 'Completed', current: 'Current', upcoming: 'Upcoming' } as const;
   scopeMenu().innerHTML = `
     <button class="menu-item scope-item ${ui.mode === 'overview' ? 'on' : ''}" data-scope="overview">${icon('grad')}<span>Study overview</span>
@@ -134,7 +134,7 @@ export async function clearSemester(): Promise<void> {
     body: `This removes ${plural(s.courses.length, 'course')}. You can still undo right after, but consider exporting a backup first.`,
     options: [{ value: 'cancel', label: 'Cancel' }, { value: 'ok', label: 'Delete all', primary: true }],
   });
-  if (v === 'ok') { commit(() => { s.courses = []; }); toast('All courses deleted', undoAction); }
+  if (v === 'ok') { commit(() => { s.courses = []; }); toast('All courses deleted', undoAction()); }
 }
 
 /** Steps through semesters in order. */
@@ -175,7 +175,7 @@ export function initTopbar(): void {
     if (act === 'print') window.print();
     else if (act === 'export') exportBackup();
     else if (act === 'ics') exportCalendar();
-    else if (act === 'import') $('#import-file').click();
+    else if (act === 'import') openImport();
     else if (act === 'reveal') state.platform.revealData?.();
     else if (act === 'requirements') openProgramDialog();
     else if (act === 'example') loadExamples();

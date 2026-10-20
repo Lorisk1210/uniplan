@@ -7,6 +7,7 @@ export interface DesktopBridge {
   save(json: string): Promise<void>;
   saveSync(json: string): void;
   exportFile(file: { name: string; content: string }): Promise<boolean>;
+  openFile(): Promise<string | null>;
   revealData(): void;
   onMenu(cb: (action: MenuAction) => void): void;
 }
@@ -34,6 +35,7 @@ export async function desktopPlatform(bridge: DesktopBridge): Promise<Platform> 
     save: (json) => bridge.save(json),
     flush: (json) => bridge.saveSync(json),
     exportFile: ({ name, content }) => bridge.exportFile({ name, content }),
+    openFile: () => bridge.openFile(),
     revealData: () => bridge.revealData(),
     onMenu: (cb) => bridge.onMenu(cb),
   };

@@ -47,10 +47,20 @@ describe('normalizeData', () => {
     expect(data.semesters.map((s) => [s.start, s.end])).toEqual([['', '2026-07-01'], ['2026-04-13', ''], ['2026-04-13', '2026-07-17']]);
   });
 
-  it('gives duplicate semester ids a fresh one', () => {
-    const data = normalizeData({ semesters: [{ id: 'x', name: 'A' }, { id: 'x', name: 'B' }] });
+  it('gives duplicate ids a fresh one, across semesters too', () => {
+    const course = { id: 'c', name: 'C', sessions: [{ id: 's', day: 0 }, { id: 's', day: 1 }] };
+    const data = normalizeData({ semesters: [{ id: 'x', name: 'A', courses: [course] }, { id: 'x', name: 'B', courses: [course] }] });
+    const ids = data.semesters.flatMap((s) => [s.id, ...s.courses.flatMap((c) => [c.id, ...c.sessions.map((x) => x.id)])]);
+    expect(new Set(ids).size).toBe(ids.length);
     expect(data.semesters[0].id).toBe('x');
-    expect(data.semesters[1].id).not.toBe('x');
+    expect(data.semesters[0].courses[0].id).toBe('c');
+  });
+
+  it('replaces ids that are unsafe to put into markup', () => {
+    const data = normalizeData({ semesters: [{ id: '"><img>', name: 'A', courses: [{ id: 'ok_1-2', name: 'C' }, { id: "a'b", name: 'D' }] }] });
+    expect(data.semesters[0].id).toMatch(/^[a-z0-9]+$/);
+    expect(data.semesters[0].courses.map((c) => c.id)[0]).toBe('ok_1-2');
+    expect(data.semesters[0].courses[1].id).not.toBe("a'b");
   });
 
   it('round-trips through JSON', () => {
@@ -99,6 +109,14 @@ describe('backups', () => {
   it('merges by id', () => {
     expect(mergeById([{ id: 'a', v: 1 }, { id: 'b', v: 1 }], [{ id: 'b', v: 2 }, { id: 'c', v: 2 }]))
       .toEqual([{ id: 'a', v: 1 }, { id: 'b', v: 2 }, { id: 'c', v: 2 }]);
+  });
+
+  it('keeps course ids unique when a merged backup repeats them', () => {
+    const current = normalizeData({ semesters: [{ id: 's1', name: 'A', courses: [{ id: 'c1', name: 'X' }] }] });
+    const incoming = normalizeData({ semesters: [{ id: 's2', name: 'B', courses: [{ id: 'c1', name: 'X again' }] }] });
+    const merged = mergeData(current, incoming);
+    expect(merged.semesters[0].courses[0].id).toBe('c1');
+    expect(merged.semesters[1].courses[0].id).not.toBe('c1');
   });
 
   it('keeps the current requirements when merging', () => {

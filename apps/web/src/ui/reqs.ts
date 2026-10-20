@@ -1,5 +1,5 @@
 import {
-  courseLabel, fmtNum, plural, shortSemesterName, STAGE_LABEL, tallyCredits, type Bucket, type CreditEntry,
+  courseLabel, creditsOf, fmtNum, plural, shortSemesterName, STAGE_LABEL, tallyCredits, type Bucket, type CreditEntry,
 } from '@uniplan/core';
 import { esc, icon } from '../dom';
 import { state } from '../store';
@@ -29,7 +29,7 @@ function chipsHTML(entries: CreditEntry[], mode: Mode): string {
   };
   let html = own.map(chip).join('');
   if (others.length) {
-    const cp = others.reduce((s, e) => s + (e.course.credits || 0), 0);
+    const cp = creditsOf(others.map((e) => e.course));
     const n = new Set(others.map((e) => e.semester.id)).size;
     const tip = others.map((e) => `${courseLabel(e.course)} (${e.semester.name}) · ${e.course.credits ?? '?'} CP`).join('\n');
     html += `<button class="others" data-goto="overview" title="${esc(tip)}">+${fmtNum(cp)} CP from ${n === 1 ? 'another semester' : `${n} other semesters`}</button>`;

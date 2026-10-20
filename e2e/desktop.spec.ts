@@ -38,6 +38,23 @@ test('sets unreadable data aside instead of overwriting it', async () => {
   await app.close();
 });
 
+test('imports a backup picked in the native open dialog', async () => {
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'uniplan-'));
+  const backup = path.join(dataDir, 'backup.json');
+  writeFileSync(backup, JSON.stringify({ app: 'uniplan', version: 2, semesters: [{ name: 'SoSe 2026', courses: [{ name: 'From the backup', stage: 2 }] }] }));
+  const app = await launch(dataDir);
+  const page = await app.firstWindow();
+  await expect(page.locator('#btn-scope')).toBeVisible();
+  await app.evaluate(({ dialog, BrowserWindow }, file) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [file] })) as typeof dialog.showOpenDialog;
+    BrowserWindow.getAllWindows()[0].webContents.send('menu', 'import');
+  }, backup);
+  await expect(page.locator('#btn-scope')).toContainText('SoSe 2026');
+  await page.locator('[data-view="final"]').click();
+  await expect(page.locator('.card', { hasText: 'From the backup' })).toBeVisible();
+  await app.close();
+});
+
 test('menu commands reach the page', async () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), 'uniplan-'));
   const app = await launch(dataDir);

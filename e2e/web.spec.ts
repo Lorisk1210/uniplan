@@ -172,3 +172,52 @@ test('exports the final timetable over the lecture period', async ({ page }) => 
   expect(ics).toContain('DTSTART:20261019T101500');
   expect(ics).toContain('SUMMARY:Machine Learning (Lecture)');
 });
+
+test('a toast’s Undo only undoes the change it reports', async ({ page }) => {
+  await loadExamples(page);
+  const cv = page.locator('.card', { hasText: 'Computer Vision' });
+  await cv.hover();
+  await cv.locator('[data-act="drop"]').click();
+  const dropToast = page.locator('.toast', { hasText: 'Dropped' });
+  await page.locator('.card', { hasText: 'Data Visualization' }).locator('[data-act="fav"]').click();
+  await dropToast.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.locator('.toast').last()).toContainText('changed other things since');
+  await expect(page.locator('.card', { hasText: 'Data Visualization' }).locator('.star')).toHaveClass(/on/);
+  await expect(page.locator('.card', { hasText: 'Computer Vision' })).toHaveCount(0);
+});
+
+test('going back in a review puts back that course, not some other change', async ({ page }) => {
+  await loadExamples(page);
+  await page.locator('#btn-review').click();
+  const dlg = page.locator('#dlg-review');
+  const first = (await dlg.locator('.rv-title').textContent())!;
+  await dlg.locator('[data-rv="advance"]').click();
+  await dlg.locator('[data-rv="fav"]').click();
+  const second = (await dlg.locator('.rv-title').textContent())!;
+  await dlg.locator('[data-rv="back"]').click();
+  await expect(dlg.locator('.rv-title')).toHaveText(first);
+  await page.keyboard.press('Escape');
+  const card = page.locator('.card', { has: page.locator('.card-title', { hasText: new RegExp(`^${first.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }) });
+  await expect(card.locator('.stage-pill')).toContainText('Idea');
+  await expect(page.locator('.card', { has: page.locator('.card-title', { hasText: second }) }).locator('.star').first()).toHaveClass(/on/);
+});
+
+test('importing an old backup into a second semester keeps the two apart', async ({ page }) => {
+  const course = { id: 'same', name: 'Shared course', credits: 5, stage: 0 };
+  await seed(page, { 'uniplan:v1': [course] });
+  await page.goto('/');
+  await expect(page.locator('.card')).toHaveCount(1);
+  await page.locator('#import-file').setInputFiles({ name: 'old.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ app: 'uniplan', version: 1, courses: [course] })) });
+  await page.locator('#dlg-choice').getByRole('button', { name: 'New semester' }).click();
+  await expect(page.locator('#btn-scope')).toContainText('Imported');
+
+  const card = page.locator('.card', { hasText: 'Shared course' });
+  await card.hover();
+  await card.locator('[data-act="drop"]').click();
+  await page.locator('[data-view="dropped"]').click();
+  await page.locator('.card [data-act="delete"]').click();
+
+  await page.keyboard.press('[');
+  await page.locator('[data-view="ideas"]').click();
+  await expect(page.locator('.card', { hasText: 'Shared course' })).toHaveCount(1);
+});

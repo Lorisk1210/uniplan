@@ -128,12 +128,18 @@ function ensureSemester(): Semester {
 
 /* ───────────────────────── Changes + undo ───────────────────────── */
 
-let past: string[] = [];
-let future: string[] = [];
+/** Snapshots of the data before each change, tagged with the change's id. */
+interface Snapshot {
+  id: number;
+  data: string;
+}
+let past: Snapshot[] = [];
+let future: Snapshot[] = [];
+let lastId = 0;
 const HISTORY = 100;
 
 export function commit(fn: () => void): void {
-  past.push(JSON.stringify(state.data));
+  past.push({ id: ++lastId, data: JSON.stringify(state.data) });
   if (past.length > HISTORY) past.shift();
   future = [];
   fn();
@@ -142,14 +148,14 @@ export function commit(fn: () => void): void {
   emit();
 }
 
-function travel(from: string[], to: string[], name: 'undo' | 'redo', silent: boolean): boolean {
+function travel(from: Snapshot[], to: Snapshot[], name: 'undo' | 'redo', silent: boolean): boolean {
   const snap = from.pop();
-  if (snap == null) {
+  if (!snap) {
     if (!silent) toast(`Nothing to ${name}`);
     return false;
   }
-  to.push(JSON.stringify(state.data));
-  state.data = normalizeData(JSON.parse(snap));
+  to.push({ id: snap.id, data: JSON.stringify(state.data) });
+  state.data = normalizeData(JSON.parse(snap.data));
   ensureSemester();
   persist();
   emit();
@@ -159,7 +165,18 @@ function travel(from: string[], to: string[], name: 'undo' | 'redo', silent: boo
 
 export const undo = (silent = false): boolean => travel(past, future, 'undo', silent);
 export const redo = (silent = false): boolean => travel(future, past, 'redo', silent);
-export const undoAction = { action: 'Undo', onAction: () => undo(true) };
+
+/** An Undo button for a toast about the change just made. It only undoes that change. */
+export function undoAction(): { action: string; onAction: () => void } {
+  const id = lastId;
+  return {
+    action: 'Undo',
+    onAction: () => {
+      if (past.at(-1)?.id === id) undo(true);
+      else toast('You’ve changed other things since. Undo them first.');
+    },
+  };
+}
 
 /* ───────────────────────── Persistence ───────────────────────── */
 
