@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Uniplan</string>
+    <string name="title_activity_main">Uniplan</string>
+    <string name="package_name">io.github.lorisk1210.uniplan</string>
+    <string name="custom_url_scheme">io.github.lorisk1210.uniplan</string>
+</resources>

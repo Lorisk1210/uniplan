@@ -1,0 +1,23 @@
+{
+  "name": "@uniplan/mobile",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Uniplan for iOS and Android: the web build in a Capacitor shell.",
+  "scripts": {
+    "sync": "npm run build -w @uniplan/web && cap sync",
+    "ios": "npm run sync && cap open ios",
+    "android": "npm run sync && cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  }
+}
