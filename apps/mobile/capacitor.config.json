@@ -1,0 +1,14 @@
+{
+  "appId": "io.github.lorisk1210.uniplan",
+  "appName": "Uniplan",
+  "webDir": "../web/dist",
+  "backgroundColor": "#f8f7f4",
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css"
+    }
+  }
+}

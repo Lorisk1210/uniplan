@@ -1,0 +1,26 @@
+{
+  "name": "@uniplan/web",
+  "version": "2.0.0",
+  "private": true,
+  "description": "The Uniplan interface. Runs in the browser and is the renderer of the desktop and mobile apps.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@uniplan/core": "*"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}

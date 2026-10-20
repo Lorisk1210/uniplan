@@ -1,0 +1,14 @@
+{
+  "name": "@uniplan/core",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Data model and pure logic shared by every Uniplan app.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
