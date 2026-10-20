@@ -1,0 +1,80 @@
+name: Release
+
+# Builds the desktop and phone apps. Run it by hand from the Actions tab, or push a tag like v2.0.0
+# to also attach the builds to a draft GitHub release.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mac
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:linux
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux
+          path: |
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run mobile:sync
+      - run: ./gradlew assembleDebug
+        working-directory: apps/mobile/android
+      - run: mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk Uniplan-android-debug.apk
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: Uniplan-android-debug.apk
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [mac, linux, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: builds
+          merge-multiple: true
+      - run: gh release create "$GITHUB_REF_NAME" builds/* --draft --generate-notes --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
