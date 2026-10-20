@@ -2,30 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
   <title>Uniplan</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231c1b19'/%3E%3Crect x='7' y='8' width='8' height='9' rx='2' fill='%23a8c5ff'/%3E%3Crect x='17' y='12' width='8' height='12' rx='2' fill='%23f6c48f'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script>
-    // Apply theme before first paint to avoid a flash.
-    (function () {
-      try {
-        var t = (JSON.parse(localStorage.getItem('uniplan:ui:v1')) || {}).theme || 'system';
-        if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    })();
-  </script>
+  <script src="./theme.js"></script>
+  <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
-  <div class="app">
+  <div class="app" id="app">
     <header class="topbar">
       <div class="brand">
         <span class="logo" aria-hidden="true"><i></i><i></i></span>
         <span class="wordmark">Uniplan</span>
+        <div class="menu-wrap scope-wrap">
+          <button class="scope" id="btn-scope" aria-haspopup="menu" aria-expanded="false" title="Switch semester (S)"></button>
+          <div class="menu scope-menu" id="scope-menu" role="menu" hidden></div>
+        </div>
       </div>
 
       <nav class="waves" id="waves" aria-label="Waves"></nav>
@@ -36,6 +29,9 @@
         </button>
         <button class="btn btn-primary" id="btn-add" title="Add course (N)">
           <span data-icon="plus"></span><span class="label">Add course</span>
+        </button>
+        <button class="btn btn-primary" id="btn-new-semester" title="New semester" hidden>
+          <span data-icon="plus"></span><span class="label">New semester</span>
         </button>
         <div class="menu-wrap">
           <button class="icon-btn" id="btn-menu" aria-haspopup="menu" aria-expanded="false" title="More">
@@ -60,21 +56,29 @@
     </aside>
 
     <main class="main" id="main">
-      <div class="main-head">
-        <div>
-          <h1 class="view-title" id="view-title"></h1>
-          <p class="view-sub" id="view-sub"></p>
+      <section id="planner">
+        <div class="main-head">
+          <div>
+            <h1 class="view-title" id="view-title"></h1>
+            <p class="view-sub" id="view-sub"></p>
+          </div>
+          <div class="stats" id="stats"></div>
         </div>
-        <div class="stats" id="stats"></div>
-      </div>
-      <div class="timetable" id="timetable"></div>
-      <div class="unscheduled" id="unscheduled"></div>
-      <div id="reqs"></div>
+        <div class="day-strip" id="day-strip"></div>
+        <div class="timetable" id="timetable"></div>
+        <div class="unscheduled" id="unscheduled"></div>
+        <div id="reqs"></div>
+      </section>
+      <section id="overview" hidden></section>
     </main>
+
+    <nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
   </div>
 
   <dialog id="dlg-editor" class="dlg dlg-wide" aria-label="Course editor"></dialog>
   <dialog id="dlg-review" class="dlg dlg-review" aria-label="Review wave"></dialog>
+  <dialog id="dlg-semester" class="dlg" aria-label="Semester"></dialog>
+  <dialog id="dlg-program" class="dlg dlg-wide" aria-label="Degree requirements"></dialog>
   <dialog id="dlg-choice" class="dlg dlg-small" aria-label="Confirm"></dialog>
 
   <datalist id="kind-suggest">
@@ -85,7 +89,5 @@
 
   <div class="toasts" id="toasts" aria-live="polite"></div>
   <input type="file" id="import-file" accept="application/json,.json" hidden>
-
-  <script src="app.js"></script>
 </body>
 </html>
