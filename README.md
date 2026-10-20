@@ -4,6 +4,12 @@ Plan your uni semesters in waves, keep each semester's timetable and credits sep
 
 Uniplan runs as a desktop app on macOS and Linux (Electron), as a phone app on iOS and Android (Capacitor), and in the browser. All of them use the same interface, and every app keeps its data on the device.
 
+![A semester's shortlist on the week timetable, with the course list on the left](docs/planner.png)
+
+![The study overview: credits so far, one bar segment and one card per semester](docs/overview.png)
+
+![The phone app: course list, one day of the timetable, and the study overview](docs/phone.png)
+
 ## Repository layout
 
 ```
