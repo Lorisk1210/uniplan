@@ -13,4 +13,12 @@ contextBridge.exposeInMainWorld('uniplanDesktop', {
   onMenu: (cb: (action: string) => void) => {
     ipcRenderer.on('menu', (_e, action: string) => cb(action));
   },
+  updates: {
+    get: () => ipcRenderer.invoke('update:get'),
+    check: () => ipcRenderer.invoke('update:check'),
+    install: () => ipcRenderer.invoke('update:install'),
+    onChange: (cb: (state: unknown) => void) => {
+      ipcRenderer.on('update:state', (_e, state: unknown) => cb(state));
+    },
+  },
 });

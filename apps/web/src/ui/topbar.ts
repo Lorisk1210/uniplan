@@ -6,6 +6,7 @@ import { exportBackup, exportCalendar, loadExamples, openImport } from './io';
 import { openProgramDialog } from './program-dialog';
 import { openSemesterDialog } from './semester-dialog';
 import { toast } from './toast';
+import { checkForUpdates } from './update';
 
 /* ───────────────────────── Theme ───────────────────────── */
 
@@ -108,6 +109,7 @@ function renderMenu(): void {
     <button class="menu-item" data-menu="export">${icon(platform.kind === 'mobile' ? 'share' : 'download')}Export backup (.json)</button>
     <button class="menu-item" data-menu="import">${icon('upload')}Import backup…</button>
     ${platform.revealData ? `<button class="menu-item" data-menu="reveal">${icon('folder')}Show data folder</button>` : ''}
+    ${platform.updater ? `<button class="menu-item" data-menu="updates">${icon('restore')}Check for updates<span class="end">${esc(platform.updater.version)}</span></button>` : ''}
     ${semester ? `<div class="menu-sep"></div>
     <button class="menu-item" data-menu="example">${icon('sparkle')}Add example courses</button>
     <button class="menu-item" data-menu="undo">${icon('undo')}Undo${coarseQuery.matches ? '' : `<span class="end"><kbd>${platform.os === 'mac' ? '⌘' : 'Ctrl'}</kbd><kbd>Z</kbd></span>`}</button>
@@ -177,6 +179,7 @@ export function initTopbar(): void {
     else if (act === 'ics') exportCalendar();
     else if (act === 'import') openImport();
     else if (act === 'reveal') state.platform.revealData?.();
+    else if (act === 'updates') checkForUpdates();
     else if (act === 'requirements') openProgramDialog();
     else if (act === 'example') loadExamples();
     else if (act === 'undo') undo();

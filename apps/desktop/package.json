@@ -1,7 +1,7 @@
 {
   "name": "@uniplan/desktop",
   "productName": "Uniplan",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Uniplan for macOS and Linux.",
   "homepage": "https://github.com/Lorisk1210/uniplan",
@@ -20,5 +20,8 @@
     "electron": "44.9.1",
     "electron-builder": "^26.15.3"
   },
-  "desktopName": "uniplan.desktop"
+  "desktopName": "uniplan.desktop",
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  }
 }

@@ -1,4 +1,4 @@
-import type { MenuAction, Platform } from './types';
+import type { MenuAction, Platform, UpdateState } from './types';
 
 /** What the Electron preload script exposes (see apps/desktop/src/preload.ts). */
 export interface DesktopBridge {
@@ -10,6 +10,12 @@ export interface DesktopBridge {
   openFile(): Promise<string | null>;
   revealData(): void;
   onMenu(cb: (action: MenuAction) => void): void;
+  updates: {
+    get(): Promise<{ version: string; state: UpdateState }>;
+    check(): Promise<UpdateState>;
+    install(): Promise<void>;
+    onChange(cb: (state: UpdateState) => void): void;
+  };
 }
 
 declare global {
@@ -20,6 +26,8 @@ declare global {
 
 /** Data lives in a JSON file in the app's data folder, written by the main process. */
 export async function desktopPlatform(bridge: DesktopBridge): Promise<Platform> {
+  const { version, state } = await bridge.updates.get();
+  const listeners: ((s: UpdateState) => void)[] = [];
   const os = bridge.os === 'darwin' ? 'mac' : bridge.os === 'linux' ? 'linux' : bridge.os === 'win32' ? 'windows' : 'other';
   const platform: Platform = {
     kind: 'desktop',
@@ -38,6 +46,17 @@ export async function desktopPlatform(bridge: DesktopBridge): Promise<Platform> 
     openFile: () => bridge.openFile(),
     revealData: () => bridge.revealData(),
     onMenu: (cb) => bridge.onMenu(cb),
+    updater: {
+      version,
+      state,
+      check: () => bridge.updates.check(),
+      install: () => bridge.updates.install(),
+      onChange: (cb) => { listeners.push(cb); },
+    },
   };
+  bridge.updates.onChange((s) => {
+    platform.updater!.state = s;
+    listeners.forEach((cb) => cb(s));
+  });
   return platform;
 }

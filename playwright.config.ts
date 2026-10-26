@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 // Runs against the production build of the web app (`npm run build` first).
 export default defineConfig({
   testDir: 'e2e',
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? 'github' : 'list',
