@@ -94,7 +94,6 @@ function renderList(d: Derived): void {
       <p>Add every course that sounds remotely interesting. You’ll filter it down in waves later.</p>
       <div class="actions">
         <button class="btn btn-primary" data-act="new">${icon('plus')}Add your first course</button>
-        <button class="link" data-act="example">or load example courses</button>
       </div></div>`;
     return;
   }
@@ -254,7 +253,6 @@ export function renderTimetable(d: Derived): void {
       <p>Add the courses you’re curious about with their times. Overlaps show up right here.</p>
       <div class="actions">
         <button class="btn btn-primary" data-act="new">${icon('plus')}Add course</button>
-        <button class="btn" data-act="example">${icon('sparkle')}Load examples</button>
       </div></div></div>`;
   } else if (!events.length) {
     const why = d.pool.length ? (d.table.length ? 'None of these courses have times yet.' : 'Nothing matches your current filters.') : `No courses in ${d.view.label} yet.`;

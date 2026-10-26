@@ -2,7 +2,7 @@
 
 Plan your uni semesters in waves, keep each semester's timetable and credits separate, and track how many credits your degree still needs.
 
-Uniplan runs as a desktop app on macOS and Linux (Electron), as a phone app on iOS and Android (Capacitor), and in the browser. All of them use the same interface, and every app keeps its data on the device.
+Uniplan runs as a desktop app on macOS and Linux (Electron), as a phone app on iOS and Android (Capacitor), and in the browser. All of them use the same interface. Every app keeps its data on the device, and once you sign in, it syncs between them.
 
 ![A semester's shortlist on the week timetable, with the course list on the left](docs/planner.png)
 
@@ -13,7 +13,8 @@ Uniplan runs as a desktop app on macOS and Linux (Electron), as a phone app on i
 ## Repository layout
 
 ```
-packages/core   Data model and logic every app shares: semesters, overlaps, credit counting, calendar export, backups
+packages/core   Data model and logic every app shares: semesters, overlaps, credit counting, calendar export, backups, sync merging
+packages/backend  Convex backend for sync: accounts and each account's plan
 apps/web        The interface (TypeScript and Vite, no framework). Runs in the browser and inside the other two apps
 apps/desktop    Electron app for macOS and Linux
 apps/mobile     Capacitor app for iOS and Android (the native Xcode and Android Studio projects live here)
@@ -27,7 +28,10 @@ This is an npm workspaces monorepo. You need Node 22.12 or newer (`.nvmrc` pins 
 npm install
 npm run dev            # web app on http://localhost:5173
 npm run dev:desktop    # desktop app on the dev server, with hot reload
+npm run convex         # Convex dev deployment; pushes packages/backend/convex on every save
 ```
+
+The dev server syncs through the Convex dev deployment in `packages/backend/.env.local`, which `npm run convex` creates the first time. Builds sync through the production deployment in `apps/web/.env.production`.
 
 ## Desktop app (macOS and Linux)
 
@@ -69,9 +73,22 @@ For Android, run it from Android Studio. You can also build an APK with `./gradl
 
 The phone app stores its data in the system's app preferences (UserDefaults on iOS, SharedPreferences on Android). Unlike browser storage, the OS doesn't clear those to free space. Export opens the share sheet, so you can save a backup to Files, AirDrop it or mail it.
 
-## Moving data between devices
+## Syncing between devices
 
-Each app keeps its own copy. To move it, use *⋯ → Export backup* on one device and *⋯ → Import backup* on the other. Import asks whether to merge or replace.
+Open *⋯ → Sign in to sync…* and create an account with your email and a password of at least 8 characters. Sign in with the same account on your other devices. Changes then show up on the others within a second or two.
+
+- Every device keeps its own copy, so the apps work offline. Changes made offline go out when the device is back online, also after a restart.
+- Sync works per course. Two devices can change different courses at the same time. If both change the same course, the device that syncs last wins.
+- On a device that already has courses, the first sign-in asks whether to combine them with the account's or replace them.
+- *Sign out* stops syncing. The plan stays on the device.
+- Each account sees only its own plan, so other students can make their own accounts.
+- There's no password reset yet. If you forget it, your plan is still on your devices: export a backup, make a new account and import it.
+
+The menu shows whether the plan is up to date, syncing or offline.
+
+## Moving data with backups
+
+You can also move data without an account. Use *⋯ → Export backup* on one device and *⋯ → Import backup* on the other. Import asks whether to merge or replace.
 
 Backups from the old single-page version import too, into the open semester or a new one. If you open the new web version in the browser you used before, it picks up the old data by itself and puts it into a semester named after the current term.
 
@@ -131,6 +148,8 @@ npm test            # unit tests for packages/core
 npm run build       # web build in apps/web/dist
 npm run e2e         # Playwright, against the web build
 ```
+
+The sync backend lives in `packages/backend/convex`. Run `npm run convex:deploy` to put changes to it on the production deployment. Do it before releasing apps that need them. Both deployments need the `JWT_PRIVATE_KEY` and `JWKS` environment variables Convex Auth signs tokens with. They're set already; the [Convex Auth docs](https://labs.convex.dev/auth/setup/manual) explain how to make new ones.
 
 The desktop tests run when the desktop app is built (`npm run build -w @uniplan/desktop`). On Linux without a display, use `xvfb-run -a npm run e2e`.
 

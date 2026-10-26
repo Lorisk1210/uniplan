@@ -9,3 +9,4 @@ export * from './credits';
 export * from './ics';
 export * from './backup';
 export * from './examples';
+export * from './sync';

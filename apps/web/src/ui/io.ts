@@ -1,5 +1,5 @@
 import {
-  buildICS, dedupeIds, exampleCourses, fmtDate, isoDate, mergeById, mergeData, newSemester, parseBackup, plural, semesterRange,
+  buildICS, dedupeIds, fmtDate, isoDate, mergeById, mergeData, newSemester, parseBackup, plural, semesterRange,
   serializeBackup, slugKey,
 } from '@uniplan/core';
 import { $, esc } from '../dom';
@@ -110,10 +110,4 @@ export async function importText(text: string): Promise<void> {
     dedupeIds({ ...state.data, semesters: [s, ...state.data.semesters.filter((x) => x !== s)] });
   });
   toast(`Imported ${plural(incoming.length, 'course')} into ${s.name}`, undoAction());
-}
-
-export function loadExamples(): void {
-  const ex = exampleCourses();
-  commit(() => { sem().courses.push(...ex); });
-  toast(`Added ${ex.length} example courses`, undoAction());
 }

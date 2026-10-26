@@ -2,15 +2,17 @@ import { planEntries } from '@uniplan/core';
 import { $, $$, closest, icon, narrowQuery } from './dom';
 import type { MenuAction } from './platform';
 import { onChange, redo, sem, setUi, state, undo, VIEWS } from './store';
+import { initSync, onSyncStatus } from './sync';
+import { initAccountDialog } from './ui/account-dialog';
 import { initEditor, openEditor } from './ui/editor';
-import { exportBackup, exportCalendar, importText, loadExamples, openImport } from './ui/io';
+import { exportBackup, exportCalendar, importText, openImport } from './ui/io';
 import { initOverview, renderOverview } from './ui/overview';
 import { derive, initPlanner, renderPlanner, renderTimetable, type Derived } from './ui/planner';
 import { initProgramDialog, openProgramDialog } from './ui/program-dialog';
 import { reqsHTML } from './ui/reqs';
 import { initReview, startReview } from './ui/review';
 import { initSemesterDialog, openSemesterDialog } from './ui/semester-dialog';
-import { applyTheme, initTopbar, renderTopbar, stepSemester, toggleMenu, toggleScopeMenu } from './ui/topbar';
+import { applyTheme, initTopbar, refreshMenu, renderTopbar, stepSemester, toggleMenu, toggleScopeMenu } from './ui/topbar';
 import { checkForUpdates, initUpdates } from './ui/update';
 
 /* ───────────────────────── Rendering ───────────────────────── */
@@ -93,6 +95,7 @@ export function initApp(): void {
   initSemesterDialog();
   initProgramDialog();
   initUpdates();
+  initAccountDialog();
 
   $('#btn-add').addEventListener('click', () => openEditor());
   $('#btn-review').addEventListener('click', startReview);
@@ -106,10 +109,9 @@ export function initApp(): void {
 
   // Buttons that show up in several places (empty states, requirement panels).
   document.addEventListener('click', (e) => {
-    const a = closest(e.target, '[data-act="new"], [data-act="example"], [data-reqs], [data-goto], #reqs [data-edit]');
+    const a = closest(e.target, '[data-act="new"], [data-reqs], [data-goto], #reqs [data-edit]');
     if (!a) return;
     if (a.dataset.act === 'new') openEditor();
-    else if (a.dataset.act === 'example') loadExamples();
     else if (a.dataset.reqs === 'toggle') setUi({ reqsOpen: !state.ui.reqsOpen });
     else if (a.dataset.reqs === 'edit') openProgramDialog();
     else if (a.dataset.goto === 'overview') setUi({ mode: 'overview' });
@@ -173,4 +175,6 @@ export function initApp(): void {
 
   applyTheme();
   render();
+  onSyncStatus(refreshMenu);
+  initSync();
 }

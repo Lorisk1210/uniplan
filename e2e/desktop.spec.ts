@@ -2,6 +2,7 @@ import { _electron as electron, expect, test } from '@playwright/test';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { examplePlan } from './examples';
 
 // The desktop app has to be built first: npm run build && npm run build -w @uniplan/desktop
 const appDir = path.resolve(__dirname, '../apps/desktop');
@@ -11,19 +12,23 @@ const launch = (dataDir: string) => electron.launch({ args: ['.'], cwd: appDir, 
 
 test('saves to a file in the data folder and loads it again', async () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), 'uniplan-'));
+  writeFileSync(path.join(dataDir, 'uniplan.json'), JSON.stringify(examplePlan()));
   let app = await launch(dataDir);
   let page = await app.firstWindow();
   await expect(page.locator('html')).toHaveAttribute('data-shell', 'desktop');
-  await page.locator('.tt-empty').getByRole('button', { name: 'Load examples' }).click();
   await expect(page.locator('.card')).toHaveCount(11);
+  await page.locator('.card', { hasText: 'Japanese I' }).click();
+  await page.locator('#dlg-editor [name=name]').fill('Japanese II');
+  await page.locator('#dlg-editor').getByRole('button', { name: 'Save' }).click();
   await app.close();
 
   const saved = JSON.parse(readFileSync(path.join(dataDir, 'uniplan.json'), 'utf8'));
   expect(saved.semesters[0].courses).toHaveLength(12);
+  expect(saved.semesters[0].courses.map((c: { name: string }) => c.name)).toContain('Japanese II');
 
   app = await launch(dataDir);
   page = await app.firstWindow();
-  await expect(page.locator('.card')).toHaveCount(11);
+  await expect(page.locator('.card', { hasText: 'Japanese II' })).toBeVisible();
   expect(readdirSync(path.join(dataDir, 'backups'))).toHaveLength(1);
   await app.close();
 });
