@@ -2,9 +2,11 @@ import { creditsOf, finalEntries, fmtNum, plural, semesterStatus, summarizeSemes
 import { $, closest, coarseQuery, esc, icon } from '../dom';
 import { commit, courses, inView, saveUi, sem, semesters, setUi, state, undo, undoAction, VIEWS, type Tab, type ViewKey } from '../store';
 import { choose } from './choice';
-import { exportBackup, exportCalendar, loadExamples, openImport } from './io';
+import { exportBackup, exportCalendar, openImport } from './io';
 import { openProgramDialog } from './program-dialog';
 import { openSemesterDialog } from './semester-dialog';
+import { signOut, syncStatus, type SyncStatus } from '../sync';
+import { openAccountDialog } from './account-dialog';
 import { toast } from './toast';
 import { checkForUpdates } from './update';
 
@@ -93,6 +95,23 @@ export function toggleScopeMenu(open = scopeMenu().hidden): void {
 
 const menu = () => $('#menu');
 
+const SYNC_LABEL = { syncing: 'Syncing…', synced: 'Up to date', offline: 'Offline', expired: 'Signed out' } as const;
+
+function syncSection(s: SyncStatus): string {
+  if (s.kind === 'off') return '';
+  const head = `<div class="menu-sep"></div><div class="menu-label">Sync</div>`;
+  if (s.kind === 'signed-out') return `${head}<button class="menu-item" data-menu="sign-in">${icon('user')}Sign in to sync…</button>`;
+  return `${head}
+    <div class="menu-sync" title="${esc(s.email)}"><span class="sync-dot ${s.kind}"></span><span class="sync-email">${esc(s.email)}</span><span class="end">${SYNC_LABEL[s.kind]}</span></div>
+    ${s.kind === 'expired' ? `<button class="menu-item" data-menu="sign-in">${icon('user')}Sign in again…</button>` : ''}
+    <button class="menu-item" data-menu="sign-out">${icon('x')}Sign out</button>`;
+}
+
+/** Keeps the sync status in an open menu current. */
+export function refreshMenu(): void {
+  if (!menu().hidden) renderMenu();
+}
+
 function renderMenu(): void {
   const { ui, platform } = state;
   const themeBtn = (t: string, ic: string, l: string) => `<button data-theme-set="${t}" class="${ui.theme === t ? 'on' : ''}">${icon(ic)}${l}</button>`;
@@ -110,8 +129,8 @@ function renderMenu(): void {
     <button class="menu-item" data-menu="import">${icon('upload')}Import backup…</button>
     ${platform.revealData ? `<button class="menu-item" data-menu="reveal">${icon('folder')}Show data folder</button>` : ''}
     ${platform.updater ? `<button class="menu-item" data-menu="updates">${icon('restore')}Check for updates<span class="end">${esc(platform.updater.version)}</span></button>` : ''}
+    ${syncSection(syncStatus())}
     ${semester ? `<div class="menu-sep"></div>
-    <button class="menu-item" data-menu="example">${icon('sparkle')}Add example courses</button>
     <button class="menu-item" data-menu="undo">${icon('undo')}Undo${coarseQuery.matches ? '' : `<span class="end"><kbd>${platform.os === 'mac' ? '⌘' : 'Ctrl'}</kbd><kbd>Z</kbd></span>`}</button>
     <button class="menu-item danger" data-menu="clear">${icon('trashAll')}Delete all courses in ${esc(s.name)}</button>` : ''}
     ${coarseQuery.matches ? '' : `<div class="menu-sep"></div>
@@ -180,8 +199,9 @@ export function initTopbar(): void {
     else if (act === 'import') openImport();
     else if (act === 'reveal') state.platform.revealData?.();
     else if (act === 'updates') checkForUpdates();
+    else if (act === 'sign-in') { const s = syncStatus(); openAccountDialog('email' in s ? s.email : ''); }
+    else if (act === 'sign-out') signOut().then(() => toast('Signed out. Your plan stays on this device.'));
     else if (act === 'requirements') openProgramDialog();
-    else if (act === 'example') loadExamples();
     else if (act === 'undo') undo();
     else if (act === 'clear') clearSemester();
   });

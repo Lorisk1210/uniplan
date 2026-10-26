@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { examplePlan } from './examples';
 
 // Runs the web build the way the Android app does: Capacitor's real native-bridge.js, with a small
 // stand-in for the native side that answers the plugin calls the app makes.
@@ -56,14 +57,21 @@ test('stores data in the native preferences store', async ({ page }) => {
   await open(page);
   await expect(page.locator('html')).toHaveAttribute('data-shell', 'mobile');
   await expect(page.locator('html')).toHaveAttribute('data-os', 'android');
-  await page.locator('.tt-empty').getByRole('button', { name: 'Load examples' }).click();
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('device:uniplan:data'))).toContain('Machine Learning');
+  // Put the examples on the "device", then change a course in the app.
+  await page.evaluate((plan) => localStorage.setItem('device:uniplan:data', plan), JSON.stringify(examplePlan()));
+  await page.reload();
+  await page.locator('#tabbar').getByRole('button', { name: 'Courses' }).click();
+  await expect(page.locator('.card')).toHaveCount(11);
+  await page.locator('.card', { hasText: 'Japanese I' }).click();
+  await page.locator('#dlg-editor [name=name]').fill('Japanese II');
+  await page.locator('#dlg-editor').getByRole('button', { name: 'Save' }).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('device:uniplan:data'))).toContain('Japanese II');
   // Nothing went to web storage.
   expect(await page.evaluate(() => localStorage.getItem('uniplan:v2'))).toBeNull();
 
   await page.reload();
   await page.locator('#tabbar').getByRole('button', { name: 'Courses' }).click();
-  await expect(page.locator('.card')).toHaveCount(11);
+  await expect(page.locator('.card', { hasText: 'Japanese II' })).toBeVisible();
 });
 
 test('exports through the share sheet and follows the theme with the status bar', async ({ page }) => {

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { examplePlan } from './examples';
 
 /** Puts items into localStorage before the app's first load (not on reloads). */
 async function seed(page: Page, items: Record<string, unknown>) {
@@ -11,8 +12,8 @@ async function seed(page: Page, items: Record<string, unknown>) {
 }
 
 async function loadExamples(page: Page) {
+  await seed(page, { 'uniplan:v2': examplePlan() });
   await page.goto('/');
-  await page.locator('.tt-empty').getByRole('button', { name: 'Load examples' }).click();
   await expect(page.locator('.card')).toHaveCount(11);
 }
 

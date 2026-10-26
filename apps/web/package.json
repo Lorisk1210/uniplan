@@ -18,7 +18,9 @@
     "@capacitor/share": "^8.0.3",
     "@fontsource/instrument-serif": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
-    "@uniplan/core": "*"
+    "@uniplan/backend": "*",
+    "@uniplan/core": "*",
+    "convex": "^1.48.0"
   },
   "devDependencies": {
     "vite": "^8.3.4"

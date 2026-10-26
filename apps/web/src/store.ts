@@ -74,6 +74,11 @@ const listeners: (() => void)[] = [];
 export const onChange = (fn: () => void): void => { listeners.push(fn); };
 const emit = () => listeners.forEach((fn) => fn());
 
+// Changes made on this device (edits, undo, redo, import), for sync to send.
+const localListeners: (() => void)[] = [];
+export const onLocalChange = (fn: () => void): void => { localListeners.push(fn); };
+const emitLocal = () => localListeners.forEach((fn) => fn());
+
 export const saveUi = (): void => {
   try { localStorage.setItem(UI_STORE, JSON.stringify(state.ui)); } catch { /* ignore */ }
 };
@@ -146,6 +151,7 @@ export function commit(fn: () => void): void {
   ensureSemester();
   persist();
   emit();
+  emitLocal();
 }
 
 function travel(from: Snapshot[], to: Snapshot[], name: 'undo' | 'redo', silent: boolean): boolean {
@@ -159,6 +165,7 @@ function travel(from: Snapshot[], to: Snapshot[], name: 'undo' | 'redo', silent:
   ensureSemester();
   persist();
   emit();
+  emitLocal();
   if (!silent) toast(name === 'undo' ? 'Undone' : 'Redone');
   return true;
 }
@@ -212,6 +219,19 @@ export async function initStore(platform: Platform): Promise<string | undefined>
     if ((saving || pending != null) && platform.flush) platform.flush(JSON.stringify(state.data));
   });
   return notice;
+}
+
+/**
+ * Takes in the plan merged with changes from other devices. Not undoable, and it clears the undo
+ * history: an older snapshot would bring back what the other devices changed.
+ */
+export function applySynced(data: PlanData): void {
+  state.data = data;
+  past = [];
+  future = [];
+  ensureSemester();
+  persist();
+  emit();
 }
 
 /** Replaces all data at once (import). Undoable. */

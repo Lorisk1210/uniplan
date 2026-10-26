@@ -13,6 +13,8 @@
   "scripts": {
     "dev": "npm run dev -w @uniplan/web",
     "dev:desktop": "npm run dev -w @uniplan/desktop",
+    "convex": "npm run dev -w @uniplan/backend",
+    "convex:deploy": "npm run deploy -w @uniplan/backend",
     "build": "npm run build -w @uniplan/web",
     "start": "npm run start -w @uniplan/desktop",
     "dist:mac": "npm run dist:mac -w @uniplan/desktop",

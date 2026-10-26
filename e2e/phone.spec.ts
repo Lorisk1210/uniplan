@@ -1,9 +1,15 @@
 import { expect, test } from '@playwright/test';
+import { examplePlan } from './examples';
 
 test.beforeEach(async ({ page }) => {
   page.on('pageerror', (e) => { throw e; });
+  // Only before the first load, so reloads keep what the test changed.
+  await page.addInitScript((plan) => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('uniplan:v2', plan);
+  }, JSON.stringify(examplePlan()));
   await page.goto('/');
-  await page.locator('.tt-empty').getByRole('button', { name: 'Load examples' }).click();
 });
 
 test('shows one section at a time, picked from the tab bar', async ({ page }) => {

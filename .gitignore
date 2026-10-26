@@ -15,3 +15,6 @@ apps/mobile/ios/App/App/capacitor.config.json
 apps/mobile/ios/App/App/config.xml
 test-results/
 playwright-report/
+
+# Convex writes the deployment name and URL here on `npx convex dev`.
+.env.local
