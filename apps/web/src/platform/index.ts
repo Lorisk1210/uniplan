@@ -2,7 +2,7 @@ import { browserPlatform } from './browser';
 import { desktopPlatform } from './desktop';
 import type { Platform } from './types';
 
-export type { MenuAction, Platform } from './types';
+export type { MenuAction, Platform, UpdateState } from './types';
 
 declare global {
   interface Window {

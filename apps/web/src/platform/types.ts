@@ -1,7 +1,7 @@
 /** Things the native menus of the desktop app can ask the interface to do. */
 export type MenuAction =
   | 'new-course' | 'new-semester' | 'edit-semester' | 'overview' | 'requirements'
-  | 'import' | 'export' | 'export-ics' | 'print' | 'undo' | 'redo' | 'prev-semester' | 'next-semester';
+  | 'import' | 'export' | 'export-ics' | 'print' | 'undo' | 'redo' | 'prev-semester' | 'next-semester' | 'check-updates';
 
 export interface LoadResult {
   /** Parsed JSON as stored, or null if there's nothing yet. */
@@ -14,6 +14,25 @@ export interface ExportFile {
   name: string;
   content: string;
   mime: string;
+}
+
+/** Where the desktop app's updater is. Same shape as `UpdateState` in apps/desktop/src/updates.ts. */
+export type UpdateState =
+  | { status: 'idle' | 'checking' | 'latest' | 'unsupported' }
+  /** available: macOS, waiting for a click to download. ready: Linux, downloaded and waiting for a restart. */
+  | { status: 'available' | 'ready'; version: string }
+  | { status: 'downloading'; version: string; percent: number }
+  | { status: 'error'; message: string };
+
+export interface Updater {
+  /** The running app's version. */
+  version: string;
+  state: UpdateState;
+  /** Resolves to the state after the check. */
+  check(): Promise<UpdateState>;
+  /** macOS: download the new version, open it and quit. Linux: restart into the downloaded version. */
+  install(): Promise<void>;
+  onChange(cb: (state: UpdateState) => void): void;
 }
 
 /** Everything that differs between the browser, the desktop app and the phone app. */
@@ -39,4 +58,6 @@ export interface Platform {
   /** Android's back button. The handler returns false when there's nothing left to go back from. */
   onBackButton?(handler: () => boolean): void;
   canPrint: boolean;
+  /** The desktop app updates itself from the GitHub releases. */
+  updater?: Updater;
 }

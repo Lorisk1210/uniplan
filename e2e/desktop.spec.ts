@@ -66,3 +66,38 @@ test('menu commands reach the page', async () => {
   await expect(page.locator('#dlg-semester')).toBeVisible();
   await app.close();
 });
+
+test('checking for updates by hand says when the app can’t update itself', async () => {
+  const app = await launch(mkdtempSync(path.join(tmpdir(), 'uniplan-')));
+  const page = await app.firstWindow();
+  const version = await app.evaluate(({ app }) => app.getVersion());
+  await page.locator('#btn-menu').click();
+  const item = page.locator('[data-menu="updates"]');
+  await expect(item).toContainText(version);
+  await item.click();
+  // `electron .` isn't the installed app, so there's nothing to update.
+  await expect(page.locator('.toast')).toContainText('can’t update itself');
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send('menu', 'check-updates'));
+  await expect(page.locator('.toast')).toHaveCount(2);
+  await app.close();
+});
+
+test('the update button follows the updater', async () => {
+  const app = await launch(mkdtempSync(path.join(tmpdir(), 'uniplan-')));
+  const page = await app.firstWindow();
+  const btn = page.locator('#btn-update');
+  await expect(page.locator('#btn-scope')).toBeVisible();
+  await expect(btn).toBeHidden();
+  const send = (state: object) => app.evaluate(({ BrowserWindow }, s) => BrowserWindow.getAllWindows()[0].webContents.send('update:state', s), state);
+  await send({ status: 'available', version: '9.9.9' });
+  await expect(btn).toHaveText('Update to 9.9.9');
+  await expect(btn).toBeEnabled();
+  await send({ status: 'downloading', version: '9.9.9', percent: 40 });
+  await expect(btn).toHaveText('Downloading 40%');
+  await expect(btn).toBeDisabled();
+  await send({ status: 'ready', version: '9.9.9' });
+  await expect(btn).toHaveText('Restart to update');
+  await send({ status: 'latest' });
+  await expect(btn).toBeHidden();
+  await app.close();
+});

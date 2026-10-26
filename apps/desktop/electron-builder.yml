@@ -33,4 +33,9 @@ linux:
   target:
     - AppImage
     - deb
+# Where the app looks for updates. Each release needs the latest-*.yml files next to the builds.
+publish:
+  provider: github
+  owner: Lorisk1210
+  repo: uniplan
 artifactName: Uniplan-${version}-${os}-${arch}.${ext}

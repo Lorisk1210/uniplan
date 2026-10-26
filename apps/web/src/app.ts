@@ -11,6 +11,7 @@ import { reqsHTML } from './ui/reqs';
 import { initReview, startReview } from './ui/review';
 import { initSemesterDialog, openSemesterDialog } from './ui/semester-dialog';
 import { applyTheme, initTopbar, renderTopbar, stepSemester, toggleMenu, toggleScopeMenu } from './ui/topbar';
+import { checkForUpdates, initUpdates } from './ui/update';
 
 /* ───────────────────────── Rendering ───────────────────────── */
 
@@ -71,6 +72,7 @@ function runMenuAction(action: MenuAction): void {
     case 'print': window.print(); break;
     case 'prev-semester': stepSemester(-1); break;
     case 'next-semester': stepSemester(1); break;
+    case 'check-updates': checkForUpdates(); break;
   }
 }
 
@@ -90,6 +92,7 @@ export function initApp(): void {
   initReview();
   initSemesterDialog();
   initProgramDialog();
+  initUpdates();
 
   $('#btn-add').addEventListener('click', () => openEditor());
   $('#btn-review').addEventListener('click', startReview);

@@ -45,6 +45,15 @@ The Mac app is signed ad hoc, because there's no Apple developer certificate. A 
 xattr -dr com.apple.quarantine /Applications/Uniplan.app
 ```
 
+### Updates
+
+The desktop app checks the GitHub releases for a new version shortly after it starts, then every four hours. You can also check by hand with *⋯ → Check for updates* or *Check for Updates…* in the app menu (the Help menu on Linux).
+
+- **Linux:** the AppImage and the .deb download the update in the background. A *Restart to update* button then shows up in the top bar. An AppImage also updates itself when you quit. A .deb asks for your password, so it only installs when you click the button.
+- **macOS:** an *Update to …* button shows up in the top bar. It downloads the new .dmg, opens it and quits Uniplan. Drag Uniplan into Applications and choose *Replace*. Apple only lets apps install their own updates when they're signed with a paid developer certificate, which is why the drag is needed. Because the app downloads the .dmg itself, macOS doesn't quarantine it, so you don't need the `xattr` step again.
+
+Versions before 2.1 don't have the updater. Install the first version that has it by hand.
+
 Your data is one JSON file: `~/Library/Application Support/Uniplan/uniplan.json` on macOS, `~/.config/Uniplan/uniplan.json` on Linux. The app rewrites it on every change. Each write goes to a temporary file first and then replaces the old one, so a crash can't leave half a file. On start the app copies the file to `backups/` (one copy per day, the last 14 days). If the file can't be read, the app moves it aside instead of overwriting it. *⋯ → Show data folder* opens the folder.
 
 ## Phone app (iOS and Android)
@@ -126,5 +135,13 @@ npm run e2e         # Playwright, against the web build
 The desktop tests run when the desktop app is built (`npm run build -w @uniplan/desktop`). On Linux without a display, use `xvfb-run -a npm run e2e`.
 
 CI runs the type checks, the unit tests, both builds and all end-to-end tests on every pull request. The Release workflow builds the macOS, Linux and Android apps. Pushing a tag such as `v2.0.0` also puts them on a draft GitHub release.
+
+To release a new version:
+
+1. Raise `version` in `apps/desktop/package.json` (say from `2.1.0` to `2.1.1`) and merge that.
+2. Push a matching tag: `git tag v2.1.1 && git push origin v2.1.1`. The Release workflow fails if the tag and the version differ.
+3. When the workflow is done, open the draft release on GitHub, check it and publish it. Installed apps only see published releases, so the update reaches them after that step.
+
+The `latest-mac.yml` and `latest-linux.yml` files on the release are the feed the apps read. Keep them on every release.
 
 After changing the logo, run `python3 scripts/icons.py` (needs Pillow) to redraw the desktop icon and the iOS and Android icons and splash screens.

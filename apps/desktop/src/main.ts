@@ -5,6 +5,7 @@ import {
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { initUpdates } from './updates';
 
 /** Set by `npm run dev`: load the Vite dev server instead of the bundled renderer. */
 const DEV_URL = process.env.UNIPLAN_DEV_URL;
@@ -162,6 +163,7 @@ function buildMenu(): void {
       label: app.name,
       submenu: [
         { role: 'about' },
+        { label: 'Check for Updates…', click: send('check-updates') },
         { type: 'separator' },
         { label: 'Degree Requirements…', accelerator: 'Cmd+,', click: send('requirements') },
         { type: 'separator' },
@@ -223,7 +225,10 @@ function buildMenu(): void {
     { role: 'windowMenu' },
     {
       role: 'help',
-      submenu: [{ label: 'Uniplan on GitHub', click: () => shell.openExternal('https://github.com/Lorisk1210/uniplan') }],
+      submenu: [
+        ...(!isMac ? [{ label: 'Check for Updates…', click: send('check-updates') }] : []),
+        { label: 'Uniplan on GitHub', click: () => shell.openExternal('https://github.com/Lorisk1210/uniplan') },
+      ],
     },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
@@ -302,6 +307,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     app.setAboutPanelOptions({ applicationName: 'Uniplan', applicationVersion: app.getVersion(), website: 'https://github.com/Lorisk1210/uniplan' });
     buildMenu();
+    initUpdates(trusted);
     createWindow();
     app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
   });
